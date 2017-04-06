@@ -48,6 +48,7 @@ bool LightingScene::init()
     auto visibleSize = Director::getInstance()->getVisibleSize();
     Vec2 origin = Director::getInstance()->getVisibleOrigin();
     _center = Vec2(visibleSize.width/2, visibleSize.height/2);
+    _light_pos = _center;
     _dir = Vec2(1,0);
     _angle = 0;
     
@@ -55,19 +56,19 @@ bool LightingScene::init()
     addChild(_drawNode);
     
     _lightNode = LightDrawNode::create();
-    _lightNode->setLightPosition(_center.x, _center.y);
+    _lightNode->setLightPosition(_light_pos.x, _light_pos.y);
     addChild(_lightNode);
     
-    vector<Vec2> poli1 = {{40,150},{90,180},{120,140}};
+    vector<Vec2> poli1 = {{60,150},{120,180},{140,140}};
     _polies.push_back(poli1);
     
-    vector<Vec2> poli2 = {{130,250},{180,280},{210,240},{170,220}};
+    vector<Vec2> poli2 = {{130,230},{180,260},{210,220},{170,200}};
     _polies.push_back(poli2);
     
-    vector<Vec2> poli3 = {{300,170},{350,200},{380,160}};
+    vector<Vec2> poli3 = {{280,170},{330,200},{360,160}};
     _polies.push_back(poli3);
     
-    vector<Vec2> poli4 = {{180,90},{230,120},{260,80},{220,50}};
+    vector<Vec2> poli4 = {{180,70},{230,100},{260,60},{220,30}};
     _polies.push_back(poli4);
     
     for (auto it = _polies.begin(); it != _polies.end(); ++it) {
@@ -83,22 +84,38 @@ bool LightingScene::init()
     
     _world.push_back(screen);
     
+    scheduleUpdate();
+    
+    return true;
+}
+
+void LightingScene::update(float dt)
+{
+    _angle += 1;
+    _light_pos.x = _center.x + 20 * sin(CC_DEGREES_TO_RADIANS(_angle));
+    _light_pos.y = _center.y + 20 * cos(CC_DEGREES_TO_RADIANS(_angle));
+    
+    auto visibleSize = Director::getInstance()->getVisibleSize();
+    Vec2 origin = Director::getInstance()->getVisibleOrigin();
+    
+    _edges.clear();
+    
     //Construct ray from center of screen to each vertex
     for (auto it = _polies.begin(); it != _polies.end(); ++it) {
         vector<Vec2> p = *it;
         for (auto it2 = p.begin(); it2 != p.end(); ++it2) {
-            Vec2 direction = *it2 - _center;
+            Vec2 direction = *it2 - _light_pos;
             calcEdge(direction);
         }
     }
     
-    calcEdge(origin - _center);
-    calcEdge(Vec2(origin.x, visibleSize.height + origin.y) - _center);
-    calcEdge(Vec2(visibleSize.width + origin.x, visibleSize.height + origin.y) - _center);
-    calcEdge(Vec2(visibleSize.width + origin.x, origin.y) - _center);
+    calcEdge(origin - _light_pos);
+    calcEdge(Vec2(origin.x, visibleSize.height + origin.y) - _light_pos);
+    calcEdge(Vec2(visibleSize.width + origin.x, visibleSize.height + origin.y) - _light_pos);
+    calcEdge(Vec2(visibleSize.width + origin.x, origin.y) - _light_pos);
     
     sort(_edges.begin(), _edges.end(), compareEdge);
-
+    
     if (_edges.size() > 0 && _edges[0].edge == EDGE_RIGHT) {
         _edges.push_back(_edges[0]);
         _edges.erase(_edges.begin());
@@ -107,34 +124,35 @@ bool LightingScene::init()
     vector<vector<Vec2>> light_poly;
     for (int i = 0; i < _edges.size(); i+=2) {
         vector<Vec2> mesh;
-        mesh.push_back(_center);
+        mesh.push_back(_light_pos);
         mesh.push_back(_edges[i].pos);
         mesh.push_back(_edges[i+1].pos);
         
         light_poly.push_back(mesh);
     }
     
+    _lightNode->setLightPosition(_light_pos.x, _light_pos.y);
+    _lightNode->clear();
+    
     for (auto it = light_poly.begin(); it != light_poly.end(); ++it) {
         vector<Vec2> p = *it;
         _lightNode->drawSolidPoly(&p[0], (unsigned int)p.size(), Color4F::RED);
     }
-    
-    return true;
 }
 
 void LightingScene::calcEdge(Vec2 direction)
 {
-    Vec2 dir_1 = direction.rotateByAngle(Vec2::ZERO, FLT_EPSILON);
-    Vec2 dir_2 = direction.rotateByAngle(Vec2::ZERO, -FLT_EPSILON);
+    Vec2 dir_1 = direction.rotateByAngle(Vec2::ZERO, 0.00001);
+    Vec2 dir_2 = direction.rotateByAngle(Vec2::ZERO, -0.00001);
     
-    vector<Vec2> cast_1 = nt_raycast(_center, dir_1, _world);
-    vector<Vec2> cast_2 = nt_raycast(_center, dir_2, _world);
+    vector<Vec2> cast_1 = nt_raycast(_light_pos, dir_1, _world);
+    vector<Vec2> cast_2 = nt_raycast(_light_pos, dir_2, _world);
     
     //left edge
-    _drawNode->drawLine(_center, cast_1[0], Color4F::RED);
+//    _drawNode->drawLine(_light_pos, cast_1[0], Color4F::RED);
     _edges.push_back({dir_1, cast_1[0], EDGE_LEFT});
     
     //right edge
-    _drawNode->drawLine(_center, cast_2[0], Color4F::RED);
+//    _drawNode->drawLine(_light_pos, cast_2[0], Color4F::RED);
     _edges.push_back({dir_2, cast_2[0], EDGE_RIGHT});
 }

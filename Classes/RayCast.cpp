@@ -73,7 +73,7 @@ vector<Vec2> nt_raycast(Vec2 origin, Vec2 direction, vector<vector<Vec2>> polygo
                 continue;
             } else {
                 // When dx is not 0
-                if(abs(direction.x) > FLT_EPSILON) {
+                if(abs(direction.x) > 0.00001) {
                     t2 = (direction.x * (p_start.y - origin.y) + direction.y * (origin.x - p_start.x))/(s_dx * direction.y - s_dy * direction.x);
                     t1 = (p_start.x + s_dx * t2 - origin.x)/direction.x;
                 } else {

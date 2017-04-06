@@ -30,6 +30,7 @@ public:
     static cocos2d::Scene* createScene();
     
     virtual bool init() override;
+    virtual void update(float dt) override;
     
     // implement the "static create()" method manually
     CREATE_FUNC(LightingScene);
@@ -43,6 +44,7 @@ private:
     std::vector<std::vector<cocos2d::Vec2>> _world;
     cocos2d::Vec2 _dir;
     cocos2d::Vec2 _center;
+    cocos2d::Vec2 _light_pos;
     std::vector<Edge> _edges;
     float _angle;
 };

@@ -44,7 +44,7 @@ void LightDrawNode::setShader(const std::string& vertShaderPath, const std::stri
 
 void LightDrawNode::setLightPosition(float x, float y)
 {
-    Size winSize = Director::getInstance()->getWinSizeInPixels();
+    Size frameSize = Director::getInstance()->getOpenGLView()->getFrameSize();
     getGLProgramState()->setUniformVec4("u_light_pos", Vec4(x, y, 0.0, 1.0));
-    getGLProgramState()->setUniformVec2("window", Vec2(winSize.width, winSize.height));
+    getGLProgramState()->setUniformVec2("window", Vec2(frameSize.width, frameSize.height));
 }
